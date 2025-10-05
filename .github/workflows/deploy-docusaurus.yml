@@ -26,17 +26,11 @@ jobs:
         with:
           node-version: 24
 
-      - name: Escape dangerous '<' chars in docs/*.md
+      - name: Escape bare '<' in docs/*.md
         run: |
-          perl -0777 -pe '
-            # protect code fences so we do not touch < inside them
-            s/(```[\s\S]*?```)//g;
-            # escape a "<" that is NOT part of <tag ...> or </tag>
-            s/(?<!\<)\<(?!\/?[a-zA-Z][^>]*\>)/
-              $& =~ /^\s*</ ? $& : "\\<"
-            /ge;
-            # (fences are already restored by the first replacement)
-          ' -i my-website/docs/**/*.md
+          # escape '<' that is NOT inside ```...``` and is NOT part of <tag ...> or </tag>
+          find my-website/docs -name '*.md' -exec sed -E -i \
+            '/^```/,/^```/! s/<([^/a-zA-Z])/\\<\1/g; /^```/,/^```/! s/<$/\\</' {} +
 
       - name: Install dependencies
         working-directory: my-website
