@@ -31,24 +31,17 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const { glob: createGlob } = require('@actions/glob');
 
-            const globber = await createGlob('my-website/docs/**/*.md');
+            const globber = await glob('my-website/docs/**/*.md');
+
             for await (const f of globber.globGenerator()) {
               let src = fs.readFileSync(f, 'utf8');
-
-              // 1. protect fenced blocks
               src = src.replace(/```[\s\S]*?```/g, m => '\0FENCE' + m + '\0FENCE');
-
-              // 2. escape the three things Acorn barfs on
               src = src
                 .replace(/(?<!\w)import\s+/g, '\\import ')
                 .replace(/(?<!\w)export\s+/g, '\\export ')
                 .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<');
-
-              // 3. restore fences
               src = src.replace(/\0FENCE/g, '');
-
               fs.writeFileSync(f, src);
             }
 
