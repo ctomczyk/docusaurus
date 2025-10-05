@@ -24,55 +24,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-
-      - name: Sanitise docs for MDX
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            function getMarkdownFiles(dir) {
-              let results = [];
-              const list = fs.readdirSync(dir, { withFileTypes: true });
-              for (const entry of list) {
-                const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) {
-                  results = results.concat(getMarkdownFiles(fullPath));
-                } else if (entry.isFile() && fullPath.endsWith('.md')) {
-                  results.push(fullPath);
-                }
-              }
-              return results;
-            }
-
-            const docs = getMarkdownFiles('my-website/docs');
-
-            for (const f of docs) {
-              let src = fs.readFileSync(f, 'utf8');
-
-              // Split into fenced and non-fenced segments
-              const segments = src.split(/(```[\s\S]*?```)/g);
-
-              // Only process non-fenced segments
-              for (let i = 0; i < segments.length; i++) {
-                if (!segments[i].startsWith('```')) {
-                  segments[i] = segments[i]
-                    .replace(/(?<!\w)import\s+/g, '\\import ')
-                    .replace(/(?<!\w)export\s+/g, '\\export ')
-                    .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<');
-                }
-              }
-
-              fs.writeFileSync(f, segments.join(''));
-            }
-
-            console.log(`Processed ${docs.length} Markdown files.`);
+          node-version: 20
 
       - name: Install dependencies
         working-directory: my-website
-        run: npm install -f
+        run: |
+          rm -rf node_modules package-lock.json
+          npm ci
 
       - name: Build site
         working-directory: my-website
