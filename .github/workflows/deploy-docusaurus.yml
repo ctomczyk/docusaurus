@@ -30,10 +30,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const fs   = require('fs');
-            const { glob } = require('@actions/glob');
+            const fs = require('fs');
+            const { glob: createGlob } = require('@actions/glob');
 
-            const globber = await glob('my-website/docs/**/*.md');
+            const globber = await createGlob('my-website/docs/**/*.md');
             for await (const f of globber.globGenerator()) {
               let src = fs.readFileSync(f, 'utf8');
 
