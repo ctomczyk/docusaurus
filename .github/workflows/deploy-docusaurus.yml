@@ -30,21 +30,20 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const fs   = require('fs');
-            const glob = require('fast-glob'); // already present in @actions/github-script
+            const fs = require('fs');
 
-            const files = await glob('my-website/docs/**/*.md');
+            const files = await glob('my-website/docs/**/*.md'); // glob is pre-injected
             for (const f of files) {
-              let src = fs.readFileSync(f,'utf8');
+              let src = fs.readFileSync(f, 'utf8');
 
               // 1. protect fenced blocks
               src = src.replace(/```[\s\S]*?```/g, m => '\0FENCE' + m + '\0FENCE');
 
               // 2. escape the three things Acorn barfs on
               src = src
-                .replace(/(?<!\w)import\s+/g, '\\import ')   // lone import
-                .replace(/(?<!\w)export\s+/g, '\\export ')  // lone export
-                .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<'); // bare <
+                .replace(/(?<!\w)import\s+/g, '\\import ')
+                .replace(/(?<!\w)export\s+/g, '\\export ')
+                .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<');
 
               // 3. restore fences
               src = src.replace(/\0FENCE/g, '');
