@@ -26,14 +26,15 @@ jobs:
         with:
           node-version: 24
 
-      - name: Normalise Markdown encoding
+      - name: Escape JSX-significant chars in docs/*.md
         run: |
-          # 1. remove UTF-8 BOM
-          find . -name '*.md' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
-          # 2. CRLF → LF  (same as dos2unix)
-          find . -name '*.md' -exec sed -i $'s/\r$//' {} +
-          # 3. drop zero-width space & soft hyphen
-          find . -name '*.md' -exec sed -i 's/\u200B//g; s/\u00AD//g' {} +
+          # escape bare '<' that is NOT inside a code fence
+          find my-website/docs -name '*.md' -print0 \
+          | xargs -0 perl -0777 -pe '
+              s/```.*?```/ESCAPE_FENCE/eigs;               # protect fences
+              s/(?<!\`)\<(?!\s*\/?[a-zA-Z]+\s*[\/>])/\\</g; # escape < that is not HTML tag
+              s/ESCAPE_FENCE/```/g;                         # restore fences
+            '
 
       - name: Install dependencies
         working-directory: my-website
