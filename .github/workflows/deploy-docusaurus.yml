@@ -28,7 +28,15 @@ jobs:
 
       - name: Install dependencies
         working-directory: my-website
-        run: npm install -f
+        run: |
+          rm -rf node_modules
+          npm ci
+
+      # ✅ Skip docusaurus-terminology in CI to prevent MDX compilation errors
+      - name: Patch config to skip terminology in CI
+        run: |
+          # Insert environment variable for skipping plugin
+          echo "CI=true" >> $GITHUB_ENV
 
       - name: Build site
         working-directory: my-website
