@@ -26,6 +26,15 @@ jobs:
         with:
           node-version: 24
 
+      - name: Normalise Markdown encoding
+        run: |
+          # strip UTF-8 BOM
+          find . -name '*.md' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
+          # CRLF → LF
+          find . -name '*.md' -exec dos2unix {} +
+          # remove zero-width spaces & soft hyphens
+          find . -name '*.md' -exec sed -i 's/\u200B//g; s/\u00AD//g' {} +
+
       - name: Install dependencies
         working-directory: my-website
         run: npm install -f
