@@ -30,10 +30,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
+            const fs   = require('fs');
+            const { glob } = require('@actions/glob');
 
-            const files = await glob('my-website/docs/**/*.md'); // glob is pre-injected
-            for (const f of files) {
+            const globber = await glob('my-website/docs/**/*.md');
+            for await (const f of globber.globGenerator()) {
               let src = fs.readFileSync(f, 'utf8');
 
               // 1. protect fenced blocks
