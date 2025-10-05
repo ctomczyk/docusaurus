@@ -28,11 +28,11 @@ jobs:
 
       - name: Normalise Markdown encoding
         run: |
-          # strip UTF-8 BOM
+          # 1. remove UTF-8 BOM
           find . -name '*.md' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
-          # CRLF → LF
-          find . -name '*.md' -exec dos2unix {} +
-          # remove zero-width spaces & soft hyphens
+          # 2. CRLF → LF  (same as dos2unix)
+          find . -name '*.md' -exec sed -i $'s/\r$//' {} +
+          # 3. drop zero-width space & soft hyphen
           find . -name '*.md' -exec sed -i 's/\u200B//g; s/\u00AD//g' {} +
 
       - name: Install dependencies
