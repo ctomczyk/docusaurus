@@ -26,15 +26,17 @@ jobs:
         with:
           node-version: 24
 
-      - name: Escape JSX-significant chars in docs/*.md
+      - name: Escape dangerous '<' chars in docs/*.md
         run: |
-          # escape bare '<' that is NOT inside a code fence
-          find my-website/docs -name '*.md' -print0 \
-          | xargs -0 perl -0777 -pe '
-              s/```.*?```/ESCAPE_FENCE/eigs;               # protect fences
-              s/(?<!\`)\<(?!\s*\/?[a-zA-Z]+\s*[\/>])/\\</g; # escape < that is not HTML tag
-              s/ESCAPE_FENCE/```/g;                         # restore fences
-            '
+          perl -0777 -pe '
+            # protect code fences so we do not touch < inside them
+            s/(```[\s\S]*?```)//g;
+            # escape a "<" that is NOT part of <tag ...> or </tag>
+            s/(?<!\<)\<(?!\/?[a-zA-Z][^>]*\>)/
+              $& =~ /^\s*</ ? $& : "\\<"
+            /ge;
+            # (fences are already restored by the first replacement)
+          ' -i my-website/docs/**/*.md
 
       - name: Install dependencies
         working-directory: my-website
