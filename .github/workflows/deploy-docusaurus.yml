@@ -33,7 +33,6 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            // Recursively collect Markdown files
             function getMarkdownFiles(dir) {
               let results = [];
               const list = fs.readdirSync(dir, { withFileTypes: true });
@@ -53,19 +52,20 @@ jobs:
             for (const f of docs) {
               let src = fs.readFileSync(f, 'utf8');
 
-              // 1. protect fenced blocks
-              src = src.replace(/```[\s\S]*?```/g, m => '\0FENCE' + m + '\0FENCE');
+              // Split into fenced and non-fenced segments
+              const segments = src.split(/(```[\s\S]*?```)/g);
 
-              // 2. escape the three things Acorn barfs on
-              src = src
-                .replace(/(?<!\w)import\s+/g, '\\import ')
-                .replace(/(?<!\w)export\s+/g, '\\export ')
-                .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<');
+              // Only process non-fenced segments
+              for (let i = 0; i < segments.length; i++) {
+                if (!segments[i].startsWith('```')) {
+                  segments[i] = segments[i]
+                    .replace(/(?<!\w)import\s+/g, '\\import ')
+                    .replace(/(?<!\w)export\s+/g, '\\export ')
+                    .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<');
+                }
+              }
 
-              // 3. restore fences
-              src = src.replace(/\0FENCE/g, '');
-
-              fs.writeFileSync(f, src);
+              fs.writeFileSync(f, segments.join(''));
             }
 
             console.log(`Processed ${docs.length} Markdown files.`);
