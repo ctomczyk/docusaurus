@@ -4,6 +4,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+const isCI = process.env.CI === 'true';
+
 const config: Config = {
   title: 'My Site',
   tagline: 'Dinosaurs are cool',
@@ -36,11 +38,14 @@ const config: Config = {
   },
 
   plugins: [
-    ['@grnet/docusaurus-terminology', {
-      termsDir: './docs/terms',
-      docsDir: './docs/',
-      glossaryFilepath: './docs/glossary.md'
-    }],
+    // Only include docusaurus-terminology locally or in non-CI environments
+    ...(!isCI ? [
+      ['@grnet/docusaurus-terminology', {
+        termsDir: './docs/terms',
+        docsDir: './docs/',
+        glossaryFilepath: './docs/glossary.md',
+      }],
+    ] : [])
   ],
 
   presets: [
