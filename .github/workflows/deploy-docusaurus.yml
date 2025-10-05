@@ -31,10 +31,26 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const { glob: createGlob } = require('@actions/glob');
+            const path = require('path');
 
-            const globber = await createGlob('my-website/docs/**/*.md');
-            for await (const f of globber.globGenerator()) {
+            // Recursively collect Markdown files
+            function getMarkdownFiles(dir) {
+              let results = [];
+              const list = fs.readdirSync(dir, { withFileTypes: true });
+              for (const entry of list) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                  results = results.concat(getMarkdownFiles(fullPath));
+                } else if (entry.isFile() && fullPath.endsWith('.md')) {
+                  results.push(fullPath);
+                }
+              }
+              return results;
+            }
+
+            const docs = getMarkdownFiles('my-website/docs');
+
+            for (const f of docs) {
               let src = fs.readFileSync(f, 'utf8');
 
               // 1. protect fenced blocks
@@ -51,6 +67,8 @@ jobs:
 
               fs.writeFileSync(f, src);
             }
+
+            console.log(`Processed ${docs.length} Markdown files.`);
 
       - name: Install dependencies
         working-directory: my-website
