@@ -28,9 +28,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: my-website
-        run: |
-          rm -rf node_modules
-          npm ci
+        run: npm install -f
 
       - name: Build site
         working-directory: my-website
