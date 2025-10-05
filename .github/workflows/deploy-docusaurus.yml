@@ -26,11 +26,31 @@ jobs:
         with:
           node-version: 24
 
-      - name: Escape bare '<' in docs/*.md
-        run: |
-          # escape '<' that is NOT inside ```...``` and is NOT part of <tag ...> or </tag>
-          find my-website/docs -name '*.md' -exec sed -E -i \
-            '/^```/,/^```/! s/<([^/a-zA-Z])/\\<\1/g; /^```/,/^```/! s/<$/\\</' {} +
+      - name: Sanitise docs for MDX
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs   = require('fs');
+            const glob = require('fast-glob'); // already present in @actions/github-script
+
+            const files = await glob('my-website/docs/**/*.md');
+            for (const f of files) {
+              let src = fs.readFileSync(f,'utf8');
+
+              // 1. protect fenced blocks
+              src = src.replace(/```[\s\S]*?```/g, m => '\0FENCE' + m + '\0FENCE');
+
+              // 2. escape the three things Acorn barfs on
+              src = src
+                .replace(/(?<!\w)import\s+/g, '\\import ')   // lone import
+                .replace(/(?<!\w)export\s+/g, '\\export ')  // lone export
+                .replace(/<(?!\/?[a-zA-Z][^>]*>)/g, '\\<'); // bare <
+
+              // 3. restore fences
+              src = src.replace(/\0FENCE/g, '');
+
+              fs.writeFileSync(f, src);
+            }
 
       - name: Install dependencies
         working-directory: my-website
